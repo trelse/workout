@@ -1,8 +1,8 @@
-# example/st_app.py
 import pandas as pd
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 from datetime import date
+
 
 url = "https://docs.google.com/spreadsheets/d/105d9elDqCFDsucC8ZGefz22tn1MuX0X4mcutyxloRfM/edit?usp=sharing"
 conn = st.connection("gsheets", type=GSheetsConnection)
