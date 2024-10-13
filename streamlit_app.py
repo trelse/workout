@@ -4,22 +4,26 @@ import streamlit as st
 # from datetime import date
 from PIL import Image
 
-png_path = "myCV.png"
-
-# Convert PDF pages to images
-image =  Image.open(png_path)
+png_en_path = "myCV_en.png"
+png_de_path = "myCV_de.png"
 
 # Create tabs in the Streamlit app
-tab1, tab2 = st.tabs(["My CV", "Exercise Tracking"])
+tab1, tab2 = st.tabs(["English", "German"])
 
 # Tab 1: Display the PNG file
 with tab1:
     # Load the image using PIL
-    image = Image.open(png_path)
+    image_en = Image.open(png_en_path)
     
     # Display the image in the first tab
-    st.image(image, caption="PDF Page")
+    st.image(image_en)
 
+with tab2:
+    # Load the image using PIL
+    image_de = Image.open(png_de_path)
+    
+    # Display the image in the first tab
+    st.image(image_de)
 # Tab 2: Google Sheets connection and form for tracking exercises
 # Display each page as a PNG in its respective tab
 # for i, image in enumerate(images):
