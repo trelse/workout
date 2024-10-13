@@ -2,51 +2,141 @@ import pandas as pd
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 from datetime import date
+from PIL import Image
+
+png_path = "myCV.png"
+
+# Convert PDF pages to images
+image =  Image.open(png_path)
+
+# Create tabs in the Streamlit app
+tab1, tab2 = st.tabs(["My CV", "Exercise Tracking"])
+
+# Tab 1: Display the PNG file
+with tab1:
+    # Load the image using PIL
+    image = Image.open(png_path)
+    
+    # Display the image in the first tab
+    st.image(image, caption="PDF Page")
+
+# Tab 2: Google Sheets connection and form for tracking exercises
+with tab2:
+    # Google Sheets URL and connection
+    url = "https://docs.google.com/spreadsheets/d/105d9elDqCFDsucC8ZGefz22tn1MuX0X4mcutyxloRfM/edit?usp=sharing"
+    conn = st.connection("gsheets", type="GSheetsConnection")
+    data = conn.read(spreadsheet=url, worksheet="tracking", usecols=list(range(5)), ttl=5)
+    
+    # Clean and sort data
+    data = data.dropna(how="all")
+    exercises = data["Name"].unique()
+    data = data.sort_values(by="Date", ascending=False)
+
+    # Create a container for the data table
+    container = st.container()
+    placeholder = st.empty()
+
+    # Create the form for exercise tracking
+    with st.form(key="Exercise form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            exercise_type = st.selectbox("Exercise", options=exercises, index=None)
+            amount_effort = st.text_input(label="Effort")
+        
+        with col2:
+            amount_rep = st.text_input(label="Rep")
+            amount_set = st.number_input(label="Set", min_value=1, max_value=5, step=1)
+            comment = st.text_input(label="Comment")
+        
+        # Display the data in the placeholder
+        with placeholder.container():
+            container.write(data)
+        
+        # Submit button
+        submit_button = st.form_submit_button(label="Submit")
+        
+        # Handle form submission
+        if submit_button:
+            if not exercise_type or not amount_set or not amount_rep:
+                st.warning("You are missing something important here.")
+                st.stop()
+            else:
+                new_exer = pd.DataFrame(
+                    [
+                        {
+                            "Name": exercise_type,
+                            "Effort": amount_effort,
+                            "Rep": amount_rep,
+                            "Set": amount_set,
+                            "Date": date.today().strftime("%d.%m.%Y"),
+                            "Comment": comment,
+                        }
+                    ]
+                )
+
+                # Update the data and Google Sheet
+                update_df = pd.concat([data, new_exer], ignore_index=True)
+                conn.update(worksheet="tracking", data=update_df)
+
+                st.success("Your submission completed!")
+                
+                # Display the updated data in the placeholder
+                with placeholder.container():
+                    container.write(update_df)
+# Display each page as a PNG in its respective tab
+# for i, image in enumerate(images):
+#   with tabs[i]:
+#        st.image(image, caption=f"Page {i+1}")
 
 
-url = "https://docs.google.com/spreadsheets/d/105d9elDqCFDsucC8ZGefz22tn1MuX0X4mcutyxloRfM/edit?usp=sharing"
-conn = st.connection("gsheets", type=GSheetsConnection)
-data = conn.read(spreadsheet=url, worksheet="tracking", usecols=list(range(5)), ttl = 5)
-data = data.dropna(how="all")
-exercises = data["Name"].unique()
-data = data.sort_values(by="Date", ascending=False)
+# url = "https://docs.google.com/spreadsheets/d/105d9elDqCFDsucC8ZGefz22tn1MuX0X4mcutyxloRfM/edit?usp=sharing"
+# conn = st.connection("gsheets", type=GSheetsConnection)
+# data = conn.read(spreadsheet=url, worksheet="tracking", usecols=list(range(5)), ttl = 5)
+# data = data.dropna(how="all")
+# exercises = data["Name"].unique()
+# data = data.sort_values(by="Date", ascending=False)
+# container = st.container()
+# placeholder = st.empty()
+# with st.form(key="Exercise form"):
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         exercise_type = st.selectbox("Exercise", options=exercises, index=None)
+#         amount_effort = st.text_input(label="Effort")
+#     with col2:
+#         amount_rep = st.text_input(label="Rep")
+#         amount_set = st.number_input(label="Set", min_value=1, max_value=5, step=1)
+#         comment = st.text_input(label="Comment")
 
-with st.form(key="Exercise form"):
-    col1, col2 = st.columns(2)
-    with col1:
-        exercise_type = st.selectbox("Exercise", options=exercises, index=None)
-        amount_effort = st.text_input(label="Effort")
-    with col2:
-        amount_rep = st.text_input(label="Rep")
-        amount_set = st.number_input(label="Set", min_value=1, max_value=5, step=1)
-        comment = st.text_input(label="Comment")
+#     with placeholder.container():
+#         container.write(data)
 
-    submit_button = st.form_submit_button(label="Submit")
+#     submit_button = st.form_submit_button(label="Submit")
 
-    if submit_button:
+#     if submit_button:
 
-        if not exercise_type or not amount_set or not amount_rep:
-            st.warning("You are missing something important here.")
-            st.stop()
-        else:
-            new_exer = pd.DataFrame(
-                [
-                    {
-                        "Name": exercise_type,
-                        "Effort": amount_effort,
-                        "Rep": amount_rep,
-                        "Set": amount_set,
-                        "Date": date.today().strftime("%d.%m.%Y"),
-                        "Comment": comment,
-                    }
-                ]
-            )
+#         if not exercise_type or not amount_set or not amount_rep:
+#             st.warning("You are missing something important here.")
+#             st.stop()
+#         else:
+#             new_exer = pd.DataFrame(
+#                 [
+#                     {
+#                         "Name": exercise_type,
+#                         "Effort": amount_effort,
+#                         "Rep": amount_rep,
+#                         "Set": amount_set,
+#                         "Date": date.today().strftime("%d.%m.%Y"),
+#                         "Comment": comment,
+#                     }
+#                 ]
+#             )
 
-        update_df = pd.concat([data, new_exer], ignore_index=True)
-        conn.update(worksheet="tracking", data=update_df)
+#         update_df = pd.concat([data, new_exer], ignore_index=True)
+#         conn.update(worksheet="tracking", data=update_df)
 
-        st.success("Your submission completed! ")
-
-        st.dataframe(data)
+#         st.success("Your submission completed! ")
+#         with placeholder.container():
+#             container.write(update_df)
 
 
